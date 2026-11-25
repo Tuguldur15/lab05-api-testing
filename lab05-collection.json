@@ -1,0 +1,54 @@
+{
+  "info": {
+    "name": "Lab05",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" }
+  ],
+  "item": [
+    {
+      "name": "Setup: оюутан",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"status\":\"active\",\"coursesTaken\":[\"CS201\"]}" },
+        "url": { "raw": "{{baseUrl}}/students/B231234567", "host": ["{{baseUrl}}"], "path": ["students", "B231234567"] }
+      }
+    },
+    {
+      "name": "Setup: хичээл",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"prerequisites\":[\"CS201\"]}" },
+        "url": { "raw": "{{baseUrl}}/courses/CS313", "host": ["{{baseUrl}}"], "path": ["courses", "CS313"] }
+      }
+    },
+    {
+      "name": "Идэвхтэй оюутан урьдач хангасан үед амжилттай бүртгэгдэнэ",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Статус 201', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "pm.test('result = OK', function () {",
+              "    pm.expect(pm.response.json().result).to.eql('OK');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"studentID\":\"B231234567\",\"courseID\":\"CS313\"}" },
+        "url": { "raw": "{{baseUrl}}/registrations", "host": ["{{baseUrl}}"], "path": ["registrations"] }
+      }
+    }
+  ]
+}
