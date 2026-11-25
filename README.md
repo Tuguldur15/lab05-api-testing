@@ -1,16 +1,12 @@
-# Lab 05: API Testing
+# Lab 05: API Testing (Postman / Newman)
+
 - Нэр: Т.Төгөлдөр
 - Код: B242270050
 - node -v: v25.8.1
 - newman -v: 6.2.2
 
-## Тест дизайн (Лекц 5-ын 5 алхам)
-# 7-р мөр: оюутан ч, хичээл ч байхгүй
-curl -s -w "\nstatus=%{http_code}\n" -X POST localhost:3000/registrations -H 'Content-Type: application/json' -d '{"studentID":"NOSUCH","courseID":"NOSUCH"}'
-# 8-р мөр: идэвхгүй оюутан + урьдач дутуу
-curl -s -X PUT localhost:3000/students/INACT1 -H 'Content-Type: application/json' -d '{"status":"inactive","coursesTaken":[]}'
-curl -s -X PUT localhost:3000/courses/CS313 -H 'Content-Type: application/json' -d '{"prerequisites":["CS201"]}'
-curl -s -w "\nstatus=%{http_code}\n" -X POST localhost:3000/registrations -H 'Content-Type: application/json' -d '{"studentID":"INACT1","courseID":"CS313"}'
+## Тест дизайн
+
 Тестлэгдэх функц: `POST /registrations` (хичээлд бүртгүүлэх)
 
 ### 1. Сонголтууд ба эквивалент ангиуд
@@ -29,9 +25,7 @@ curl -s -w "\nstatus=%{http_code}\n" -X POST localhost:3000/registrations -H 'Co
 |---|---|
 | Идэвхтэй оюутан | `{"status":"active","coursesTaken":["CS201"]}` |
 | Идэвхгүй оюутан | `{"status":"inactive","coursesTaken":[]}` |
-| Байхгүй оюутан | `NOSUCH` (PUT хийгээгүй ID) |
-| Байгаа хичээл | `CS313`, `{"prerequisites":["CS201"]}` |
-| Байхгүй хичээл | `NOSUCH` |
+| Байхгүй оюутан / хичээл | PUT хийгээгүй ID |
 | Бүгд үзсэн | prerequisites `["CS201"]`, coursesTaken `["CS201"]` |
 | Огт үзээгүй | prerequisites `["CS201"]`, coursesTaken `[]` |
 | Зарим нь үзсэн | prerequisites `["CS201","CS202"]`, coursesTaken `["CS201"]` |
@@ -45,61 +39,36 @@ curl -s -w "\nstatus=%{http_code}\n" -X POST localhost:3000/registrations -H 'Co
 | 2 | Оюутан байхгүй | 200 | ERROR_NO_STUDENT |
 | 3 | Идэвхгүй оюутан | 200 | ERROR_INACTIVE_STUDENT |
 | 4 | Хичээл байхгүй | 200 | ERROR_NO_COURSE |
-| 5 | Урьдач нөхцөл огт үзээгүй | 200 | ERROR_PREREQUISITES (missing: ["CS201"]) |
+| 5 | Урьдач огт үзээгүй | 200 | ERROR_PREREQUISITES (missing: ["CS201"]) |
 | 6 | Зарим урьдач дутуу | 200 | ERROR_PREREQUISITES (missing: ["CS202"]) |
-| 7 | Давхар алдаа: оюутан ч, хичээл ч байхгүй | ? | ? |
-| 8 | Давхар алдаа: идэвхгүй оюутан + урьдач дутуу | ? | ? |
-| 9 | Хязгаар: урьдачгүй хичээл | 201 | OK |
-| 10 | Хязгаар: хоосон coursesTaken, урьдачтай хичээл | 200 | ERROR_PREREQUISITES |
-| 11 | Хязгаар: courseID талбар дутуу | 400 | ERROR_BAD_REQUEST |
-| 3 | Идэвхгүй оюутан | 200 | ERROR_INACTIVE_STUDENT |
-| 4 | Хичээл байхгүй | 200 | ERROR_NO_COURSE |
-| 5 | Урьдач нөхцөл огт үзээгүй | 200 | ERROR_PREREQUISITES (missing: ["CS201"]) |
-| 6 | Зарим урьдач дутуу | 200 | ERROR_PREREQUISITES (missing: ["CS202"]) |
-| 7 | Давхар алдаа: оюутан ч, хичээл ч байхгүй | ? | ? |
-| 8 | Давхар алдаа: идэвхгүй оюутан + урьдач дутуу | ? | ? |
+| 7 | Давхар алдаа: оюутан ч, хичээл ч байхгүй | 200 | ERROR_NO_STUDENT |
+| 8 | Давхар алдаа: идэвхгүй оюутан + урьдач дутуу | 200 | ERROR_INACTIVE_STUDENT |
 | 9 | Хязгаар: урьдачгүй хичээл | 201 | OK |
 | 10 | Хязгаар: хоосон coursesTaken, урьдачтай хичээл | 200 | ERROR_PREREQUISITES |
 | 11 | Хязгаар: courseID талбар дутуу | 400 | ERROR_BAD_REQUEST |
 
-## Тест дизайн
+7, 8-р мөрийн хүлээгдэх үр дүн зааварт заагаагүй тул серверийн жинхэнэ хариуг ажиглаж тогтоосон: оюутны байгаа эсэхийг хичээлийнхээс түрүүлж, оюутны идэвхтэй эсэхийг урьдач нөхцөлөөс түрүүлж шалгадаг.
 
-Тестлэгдэх функц: `POST /registrations`
+## Collection
 
-### Сонголтууд ба эквивалент ангиуд
+`lab05-collection.json` нь 11 бие даасан тесттэй. Тест бүр өөрийн setup PUT хүсэлтүүдийг өөрөө хийдэг, статус ба result утгын oracle-той. registrationID-ийн яг утгыг шалгаагүй, зөвхөн тоо байгаа эсэхийг шалгасан. Collection-ыг `build.js` скриптээр үүсгэсэн (`node build.js`).
 
-| Сонголт | Эквивалент ангиуд |
-|---|---|
-| studentID-гийн төлөв | идэвхтэй / идэвхгүй / байхгүй |
-| Оюутны үзсэн хичээлүүд | урьдач хангана / хангахгүй |
-| courseID-гийн хүчинтэй байдал | байгаа / байхгүй |
-| Хичээлийн урьдач нөхцөл | бүгд үзсэн / огт үзээгүй / зарим нь үзсэн |
-| Хүсэлтийн бүтэц | бүрэн / талбар дутуу |
+## Newman ажиллуулалтын үр дүн
 
-### Төлөөлөх утгууд
+| Ажиллуулалт | Файл | requests failed | assertions executed | assertions failed | exit code |
+|---|---|---|---|---|---|
+| PASS | results/newman-pass.txt | 0 | 25 | 0 | 0 |
+| FAIL | results/newman-fail.txt | 0 | 25 | 2 | 1 |
+| DOWN | results/newman-down.txt | 28 | 25 | 25 | 1 |
 
-| Анги | Төлөөлөх утга |
-|---|---|
-| Идэвхтэй оюутан | status=active, coursesTaken=["CS201"] |
-| Идэвхгүй оюутан | status=inactive |
-| Байхгүй оюутан/хичээл | PUT хийгээгүй ID |
-| Бүгд үзсэн | prerequisites=["CS201"], coursesTaken=["CS201"] |
-| Огт үзээгүй | prerequisites=["CS201"], coursesTaken=[] |
-| Зарим нь | prerequisites=["CS201","CS202"], coursesTaken=["CS201"] |
-| Урьдачгүй | prerequisites=[] |
+Тестийн тоо: 11 тест, 25 assertion (newman-pass.txt дахь assertions executed тоотой таарна).
 
-### Спецификацийн хүснэгт
+- **PASS:** бүх oracle зөв, `assertions failed 0`, `exit=0`.
+- **FAIL:** `lab05-collection-fail.json` дотор 1 ба 9-р тестийн 201-ийг зориуд 200 болгосон. Сервер 201 буцаасан тул 2 assertion унасан, `exit=1`. CI quality gate-ийн зарчмаар exit code 1 нь pipeline-ыг зогсооно.
+- **DOWN:** серверийг унтрааж ажиллуулсан. Гаралтад `ECONNREFUSED` 56 мөр байна, `exit=1`.
 
-| # | Спецификаци | Статус | result |
-|---|---|---|---|
-| 1 | Happy path | 201 | OK |
-| 2 | Оюутан байхгүй | 200 | ERROR_NO_STUDENT |
-| 3 | Идэвхгүй оюутан | 200 | ERROR_INACTIVE_STUDENT |
-| 4 | Хичээл байхгүй | 200 | ERROR_NO_COURSE |
-| 5 | Урьдач огт үзээгүй | 200 | ERROR_PREREQUISITES |
-| 6 | Зарим урьдач дутуу | 200 | ERROR_PREREQUISITES |
-| 7 | Давхар алдаа: оюутан+хичээл байхгүй | ? | ? |
-| 8 | Давхар алдаа: идэвхгүй+урьдач дутуу | ? | ? |
-| 9 | Хязгаар: урьдачгүй хичээл | 201 | OK |
-| 10 | Хязгаар: хоосон coursesTaken | 200 | ERROR_PREREQUISITES |
-| 11 | Хязгаар: courseID дутуу | 400 | ERROR_BAD_REQUEST |
+**Интерфейсийн алдаа ба oracle-ийн алдааны ялгаа:** ECONNREFUSED нь серверт холбогдож чадаагүй интерфейсийн алдаа бөгөөд хариу ирээгүй тул oracle хүртэл хүрч чадаагүй (DOWN дахь assertion-ууд "undefined" дээр унасан), харин FAIL нь сервер хариу өгсөн боловч хариу нь oracle-ийн хүлээсэн утгатай таарахгүй байсан oracle-ийн алдаа юм.
+
+## Дүгнэлт
+
+Лекц 5-ын дизайны 5 алхмаас сонголтуудыг тодорхойлж эквивалент ангиудад хуваах алхам хамгийн их бодол шаардсан, учир нь ямар утгууд тусдаа анги болохыг эхэнд нь тодорхойлоход тестийн бүх бүтэц үүнээс хамаардаг. Боломжгүй хослол таарсан: байхгүй оюутан дээр "урьдач нөхцөл хангана/хангахгүй" гэсэн сонголт утгагүй, учир нь оюутан байхгүй бол түүний үзсэн хичээл гэж байхгүй тул ийм хослолыг тестээс хассан. Зааварт давхар алдаа зэрэг гарвал аль нь буцахыг заагаагүй тул 7, 8-р тестээр серверийн жинхэнэ үйлдлийг өөрөө тогтоосон. Оюутан ч, хичээл ч байхгүй үед `ERROR_NO_STUDENT`, идэвхгүй оюутан ба урьдач дутуу үед `ERROR_INACTIVE_STUDENT` буцсан нь сервер оюутны шалгалтыг хичээл болон урьдач нөхцөлөөс түрүүлж хийдгийг харуулсан. 11 тест, 25 assertion бүгд PASS болсон тул тестүүд серверээс согог олоогүй, харин шалгалтын дарааллыг баталгаажуулсан. Тест бүр өөрийн setup PUT-тай бие даасан тул ажиллуулах дараалалаас хамаарахгүй, мөн registrationID-ийн яг утгыг шалгаагүй тул сервер дахин асаалгүй давтан ажиллуулахад аюулгүй. FAIL ажиллуулалтад нэг oracle-ыг зориуд буруу болгоход 2 assertion унаж exit code 1 гарсан нь CI quality gate-ийн зарчмаар буруу өөрчлөлтийг хаах боломжийг өгдөг. DOWN ажиллуулалтад ECONNREFUSED нь интерфейсийн алдаа бөгөөд хариу ирээгүй тул assertion-ууд undefined дээр унасан, өөрөөр хэлбэл oracle-ийн хүлээсэн утга буруу байснаас биш холболт байхгүйгээс болсон. Энэ хоёр алдааг ялгаж чадах нь алдааны шалтгааныг (сервер уу, тест үү) хурдан олоход тусална. `build.js` скриптээр collection үүсгэснээр 11 тестийн давтагдсан setup хэсгийг нэг газраас удирдаж, fail collection-ыг хялбар гаргасан.
