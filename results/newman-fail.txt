@@ -1,0 +1,155 @@
+newman
+
+Lab05
+
+❏ 1. Идэвхтэй оюутан урьдач хангасан үед бүртгэгдэнэ
+↳ Setup 1: PUT /students/T1_STU
+  PUT http://localhost:3000/students/T1_STU [200 OK, 178B, 11ms]
+
+↳ Setup 2: PUT /courses/T1_CRS
+  PUT http://localhost:3000/courses/T1_CRS [200 OK, 178B, 1ms]
+
+↳ 1. Идэвхтэй оюутан урьдач хангасан үед бүртгэгдэнэ
+  POST http://localhost:3000/registrations [201 Created, 203B, 0µs]
+  1. Статус 200
+  ✓  result = OK
+  ✓  registrationID тоо байна
+
+❏ 2. Байхгүй оюутан бүртгүүлэхэд ERROR_NO_STUDENT
+↳ Setup 1: PUT /courses/T2_CRS
+  PUT http://localhost:3000/courses/T2_CRS [200 OK, 178B, 0µs]
+
+↳ 2. Байхгүй оюутан бүртгүүлэхэд ERROR_NO_STUDENT
+  POST http://localhost:3000/registrations [200 OK, 192B, 1ms]
+  ✓  Статус 200
+  ✓  result = ERROR_NO_STUDENT
+
+❏ 3. Идэвхгүй оюутан бүртгүүлэхэд ERROR_INACTIVE_STUDENT
+↳ Setup 1: PUT /students/T3_STU
+  PUT http://localhost:3000/students/T3_STU [200 OK, 178B, 0µs]
+
+↳ Setup 2: PUT /courses/T3_CRS
+  PUT http://localhost:3000/courses/T3_CRS [200 OK, 178B, 0µs]
+
+↳ 3. Идэвхгүй оюутан бүртгүүлэхэд ERROR_INACTIVE_STUDENT
+  POST http://localhost:3000/registrations [200 OK, 198B, 0µs]
+  ✓  Статус 200
+  ✓  result = ERROR_INACTIVE_STUDENT
+
+❏ 4. Байхгүй хичээлд бүртгүүлэхэд ERROR_NO_COURSE
+↳ Setup 1: PUT /students/T4_STU
+  PUT http://localhost:3000/students/T4_STU [200 OK, 178B, 1ms]
+
+↳ 4. Байхгүй хичээлд бүртгүүлэхэд ERROR_NO_COURSE
+  POST http://localhost:3000/registrations [200 OK, 191B, 0µs]
+  ✓  Статус 200
+  ✓  result = ERROR_NO_COURSE
+
+❏ 5. Урьдач огт үзээгүй үед ERROR_PREREQUISITES
+↳ Setup 1: PUT /students/T5_STU
+  PUT http://localhost:3000/students/T5_STU [200 OK, 178B, 1ms]
+
+↳ Setup 2: PUT /courses/T5_CRS
+  PUT http://localhost:3000/courses/T5_CRS [200 OK, 178B, 1ms]
+
+↳ 5. Урьдач огт үзээгүй үед ERROR_PREREQUISITES
+  POST http://localhost:3000/registrations [200 OK, 215B, 1ms]
+  ✓  Статус 200
+  ✓  result = ERROR_PREREQUISITES
+  ✓  missing = [CS201]
+
+❏ 6. Зарим урьдач дутуу үед missing зөвхөн дутууг агуулна
+↳ Setup 1: PUT /students/T6_STU
+  PUT http://localhost:3000/students/T6_STU [200 OK, 178B, 1ms]
+
+↳ Setup 2: PUT /courses/T6_CRS
+  PUT http://localhost:3000/courses/T6_CRS [200 OK, 178B, 1ms]
+
+↳ 6. Зарим урьдач дутуу үед missing зөвхөн дутууг агуулна
+  POST http://localhost:3000/registrations [200 OK, 215B, 0µs]
+  ✓  Статус 200
+  ✓  result = ERROR_PREREQUISITES
+  ✓  missing = [CS202]
+
+❏ 7. Давхар алдаа: оюутан ч хичээл ч байхгүй
+↳ 7. Давхар алдаа: оюутан ч хичээл ч байхгүй
+  POST http://localhost:3000/registrations [200 OK, 192B, 0µs]
+  ✓  Статус 200
+  ✓  result = ERROR_NO_STUDENT
+
+❏ 8. Давхар алдаа: идэвхгүй оюутан + урьдач дутуу
+↳ Setup 1: PUT /students/T8_STU
+  PUT http://localhost:3000/students/T8_STU [200 OK, 178B, 1ms]
+
+↳ Setup 2: PUT /courses/T8_CRS
+  PUT http://localhost:3000/courses/T8_CRS [200 OK, 178B, 1ms]
+
+↳ 8. Давхар алдаа: идэвхгүй оюутан + урьдач дутуу
+  POST http://localhost:3000/registrations [200 OK, 198B, 1ms]
+  ✓  Статус 200
+  ✓  result = ERROR_INACTIVE_STUDENT
+
+❏ 9. Хязгаар: урьдачгүй хичээлд бүртгүүлж болно
+↳ Setup 1: PUT /students/T9_STU
+  PUT http://localhost:3000/students/T9_STU [200 OK, 178B, 0µs]
+
+↳ Setup 2: PUT /courses/T9_CRS
+  PUT http://localhost:3000/courses/T9_CRS [200 OK, 178B, 0µs]
+
+↳ 9. Хязгаар: урьдачгүй хичээлд бүртгүүлж болно
+  POST http://localhost:3000/registrations [201 Created, 203B, 0µs]
+  2. Статус 200
+  ✓  result = OK
+
+❏ 10. Хязгаар: хоосон coursesTaken, урьдачтай хичээл
+↳ Setup 1: PUT /students/T10_STU
+  PUT http://localhost:3000/students/T10_STU [200 OK, 178B, 1ms]
+
+↳ Setup 2: PUT /courses/T10_CRS
+  PUT http://localhost:3000/courses/T10_CRS [200 OK, 178B, 1ms]
+
+↳ 10. Хязгаар: хоосон coursesTaken, урьдачтай хичээл
+  POST http://localhost:3000/registrations [200 OK, 215B, 1ms]
+  ✓  Статус 200
+  ✓  result = ERROR_PREREQUISITES
+
+❏ 11. Хязгаар: courseID талбар дутуу үед 400 ERROR_BAD_REQUEST
+↳ Setup 1: PUT /students/T11_STU
+  PUT http://localhost:3000/students/T11_STU [200 OK, 178B, 1ms]
+
+↳ 11. Хязгаар: courseID талбар дутуу үед 400 ERROR_BAD_REQUEST
+  POST http://localhost:3000/registrations [400 Bad Request, 202B, 0µs]
+  ✓  Статус 400
+  ✓  result = ERROR_BAD_REQUEST
+
+┌─────────────────────────┬─────────────────┬─────────────────┐
+│                         │        executed │          failed │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│              iterations │               1 │               0 │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│                requests │              28 │               0 │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│            test-scripts │              11 │               0 │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│      prerequest-scripts │               0 │               0 │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│              assertions │              25 │               2 │
+├─────────────────────────┴─────────────────┴─────────────────┤
+│ total run duration: 260ms                                   │
+├─────────────────────────────────────────────────────────────┤
+│ total data received: 667B (approx)                          │
+├─────────────────────────────────────────────────────────────┤
+│ average response time: 2ms [min: 1ms, max: 11ms, s.d.: 3ms] │
+└─────────────────────────────────────────────────────────────┘
+
+[31m  # [39m[31m failure        [39m[31m detail                                                                                                           [39m
+[90m    [39m[90m                [39m[90m                                                                                                                  [39m
+ 1.  AssertionError  Статус 200                                                                                                       
+                     expected response to have status code 200 but got 201                                                            
+                     at assertion:0 in test-script                                                                                    
+                     inside "1. Идэвхтэй оюутан урьдач хангасан үед бүртгэгдэнэ / 1. Идэвхтэй оюутан урьдач хангасан үед бүртгэгдэнэ" 
+[90m    [39m[90m                [39m[90m                                                                                                                  [39m
+ 2.  AssertionError  Статус 200                                                                                                       
+                     expected response to have status code 200 but got 201                                                            
+                     at assertion:0 in test-script                                                                                    
+                     inside "9. Хязгаар: урьдачгүй хичээлд бүртгүүлж болно / 9. Хязгаар: урьдачгүй хичээлд бүртгүүлж болно"           
